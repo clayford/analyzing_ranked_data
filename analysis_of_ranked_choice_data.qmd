@@ -1,0 +1,250 @@
+---
+title: "Analysis of Ranked Response Data"
+author: "Clay Ford"
+date: "July 2023"
+format:
+  html:
+    embed-resources: true
+---
+
+Notes on analyzing ranked choice data, taken from the article [An introduction to the analysis of ranked response data](https://scholarworks.umass.edu/pare/vol27/iss1/7) (Finch, 2022)
+
+## Example of ranked choice data
+
+A survey question asks non-tenure track faculty to rank the following set of job qualities from most to least important:
+
+- contract length
+- salary
+- health care plan
+- workload
+- chair support
+- travel budget
+
+An example answer may be:
+
+1. salary
+2. health care plan
+3. workload 
+4. contract length 
+5. chair support 
+6. travel budget 
+
+This data would typically be stored in six columns as follows where the number represents the ranking. For example:
+
+contract length  | salary | health care plan | workload | chair support | travel budget
+------------- | ------------- | ------------- |------------- |------------- |------------- |
+4  | 1 | 2 | 3 | 5 | 6
+
+## Load sample data from paper
+
+One row per respondent (n = 41). First respondent ranked health care most important, followed by chair support, contract, salary, travel budget, and workload. Also collected are subject-specific data about their years of experience (1=0-5, 2-6-10, 3=11-15, 4-16-20, 5=21+) and their education (degree: 1=BA/BS, 2=MA/MS, 3=Specialist, 4=PhD). Also grad is a binary indicator for those with education greater than BA/BS.
+
+```{r}
+# available at https://scholarworks.umass.edu/pare/vol27/iss1/7/
+library(readxl)
+d <- as.data.frame(read_excel("Finch_supp_data.xlsx")) # de-tibble 
+head(d)
+```
+
+## Descriptive statistics
+
+The {pmr} package provides functions for describing and analyzing ranked choice data.
+
+1. Turn individual rankings into a summary matrix via `rankagg()`. This basically counts up number of unique rankings
+2. Use `destat()` function to get mean rank of items, pairwise comparisons, and marginal frequency
+
+```{r message=FALSE}
+library(pmr)
+d.agg <- pmr::rankagg(d[,1:6]) # only use columns with ranks
+head(d.agg)
+```
+
+The first row above shows the ranking {1, 2, 3, 4, 5, 6} was made twice (n = 2). The numbers refer to the column numbers in the original data frame, `d`. 1 = contract, 2 = salary, and so on.
+
+```{r}
+names(d[,1:6])
+```
+
+Next use `destat` on the `d.agg` object to get descriptive statistics.
+
+```{r}
+d.stat <- pmr::destat(d.agg)
+d.stat
+```
+
+`mean.rank` is self-explanatory. The second number, 1.8, refers to salary, which says salary was ranked highest on average. The highest number, 5.09, refers to travel budget, which was ranked lowest on average.
+
+`pair` component shows the number of times the first item (row) is more preferred than the second item (column). We can add row and column names to make this easier to read.
+
+```{r}
+colnames(d.stat$pair) <- rownames(d.stat$pair) <- names(d[,1:6])
+d.stat$pair
+```
+
+For example, row 1 (contract) says contract was ranked higher than salary 11 times, ranked higher than health care 13 times, and so on.
+
+`mar` component shows number of times where item i (row) is ranked j (column). We can add row names to make thsi easier to read.
+
+```{r}
+rownames(d.stat$mar) <- names(d[,1:6])
+d.stat$mar
+```
+
+For example, row 1 (contract) says contract was ranked 1st 8 times, ranked 2nd 5 times, ranked 3rd 6 times, and so on. Salary was ranked 1st most often.
+
+## Basic hypothesis test
+
+- H0 = pattern of rankings is random (ie, all items have same mean rank)
+- HA = pattern of rankings is not random
+
+Test statistic according to paper:
+
+$$Q = \frac{12n}{t(t + 1)}\sum_{j=1}^{t} \left( m_i - \frac{t + 1}{2} \right)^2 $$
+where
+
+- $n$ is sample size 
+- $t$ is total number of items to rank
+- $m_i$ is mean rank for item i
+- $(t + 1)/2$ is mean under null (all items have same mean rank)
+
+Note: Formula for this in Lee and Yu (2013) with a reference to derivation.
+
+Test statistic has Chi-square distribution with degrees of freedom of $t - 1$
+
+Function to calculate test statistic. Not from paper, I wrote this.
+
+```{r}
+f <- function(n, t, mean.rank){
+  null_mean <- rep((t+1)/2, t)
+  A <- ((12 * n)/(t * (t+1)))
+  Q <- A * sum((mean.rank - null_mean)^2)
+  p <- pchisq(Q, df = t - 1, lower.tail = FALSE)
+  list(statistic = Q, df = t - 1, p.value = p)
+}
+```
+
+Test null that all items have same mean rank
+
+```{r}
+f(n = nrow(d), t = 6, mean.rank = d.stat$mean.rank)
+```
+
+Evidence to soundly reject null.
+
+Of course tells us nothing about how the mean ranks differ and which ones are bigger, but I guess this would satisfy the desire for an official p-value.
+
+## Multidimensional scaling
+
+Investigate patterns of relationships among item rankings.
+
+The goal is to reduce the dimensionality to two or three dimensions, and then to examine the proximity of objects of interest (e.g., raters to ranked items, ranked items to one another)
+
+Can use {smacof} package. The `smacofRect()` function takes a data frame or matrix of rankings and returns an object of class smacofR. This object can be visualized with a `plot` method.
+
+```{r message=FALSE}
+library(smacof)
+d.smacof <- smacof::smacofRect(d[,1:6], itmax=1000)
+# Fig 1
+plot(d.smacof, plot.type="confplot", what="both")
+```
+
+From paper: "The plot displays the locations of the 6 items and 41 respondents on dimensions 1 and 2. Salary is most central, which reflects that it was the highest ranked of the items by many individuals. In contrast, travel budget and workload lay furthest from the cloud of participant points, which is expected given that they were the lowest ranked items for most raters. The locations of health care, contract and chair support relative to the participants indicates their midlevel rankings."
+
+"dimension 1 appears to reflect the contrast between workload and contract, such that those who ranked workload relatively more highly were also more likely to rank contract terms relatively lower. In addition, dimension 1 also reveals that ranks for salary and health care were closely related to one another; i.e., those who ranked salary highly also tended to rank health care highly."
+
+```{r}
+d.smacof$conf.col
+```
+
+"The MDS coefficients for the items also show that Salary and Health care were most closely associated with one another, as were Chair support and Travel budget. Contract and Workload had coefficients that differed from the other items and from one another."
+
+Look at MDS coefficients for raters 2 - 4 and their rankings.
+
+```{r}
+d.smacof$conf.row[2:4,]
+d[2:4,1:6]
+```
+
+"From these results, we can see that raters 2 and 4 are relatively far apart on the first dimension; i.e., their coefficients are further from one another than either is from that of rater 3. An examination of the rankings illuminates this spread, in that the rank ordering of the job qualities for Raters 2 and 4 were quite different, with the exception that they both valued Salary relatively highly."
+
+## Plackett-Luce model (PLM)
+
+PLM is designed to model the probability of a specific rank ordering for a set of t items.
+
+"The key parameter in the PLM is item worth, which reflects the importance of the item and corresponds to the ranks provided by the subjects. Higher values of the worth reflects greater importance of the item as reflected in the rankings. In other words, items that are given a higher rank will also have a higher worth value."
+
+PLM can be extended to investigate relationships between the rankings and other variables associated either with the item or the rater.
+
+Use the `PlackettLuce()` function in the {PlackettLuce} package. It requires a rankings object which can be created with the `as.rankings()` function.
+
+```{r message=FALSE}
+library(PlackettLuce)
+d.rankings <- PlackettLuce::as.rankings(d[,1:6])
+# With npseudo = 0 the MLE is the posterior mode.
+faculty.mod_mle <- PlackettLuce(d.rankings, npseudo=0)
+summary(faculty.mod_mle) # contract is reference level
+```
+
+"From these results, we see that salary and health care both had statistically significant positive worth values, meaning that they were higher ranked (more valued) than contract terms by the participants. Conversely, travel budget had a statistically significant negative coefficient, indicating that it was rated as less valuable than contract terms. The worth estimates for workload and chair support were not significantly different than that of contract."
+
+```{r}
+summary(faculty.mod_mle, ref=NULL) # mean worth is reference level
+```
+
+"the worth estimates reflect the importance of an item _relative to the mean ranking across the items_. Thus, salary and health care were both ranked significantly higher than average, whereas workload and travel budget were ranked significantly lower than average by the participants. Contract and chair support had ranks that were statistically equivalent to the overall average."
+
+Can use `psychotools::itempar()` to estimate probabilities that each item received the highest rank.
+
+```{r}
+faculty.mod_mle.itempars <- psychotools::itempar(faculty.mod_mle, vcov=TRUE)
+faculty.mod_mle.itempars
+```
+
+"We can see that salary clearly was most likely to be ranked first, followed by health care. Each of the other items had probabilities of being top ranked at or below 0.1."
+
+Evaluate performance of model (p. 12). Ratio of deviance to degrees of freedom; when model fits well, ratio is approximately 1.
+
+```{r}
+deviance(faculty.mod_mle)/faculty.mod_mle$df.residual
+```
+
+## PLM with covariates
+
+"it is of interest to assess whether there are relationships between specific characteristics of the participants, level of education (grad) and years of experience, and the worth of each item."
+
+Paper uses `pmr::rol()` function to fit these models. It requires a ranking dataset. See coefficients that begin with "Beta1". Presented in Table 9.
+
+```{r warning=FALSE}
+plmc1 <- pmr::rol(dset = d.rankings, covariate = d$experience)
+plmc2 <- pmr::rol(dset = d.rankings, covariate = d$grad)
+summary(plmc1)
+summary(plmc2)
+```
+
+"Statistical significance for each coefficient can be inferred using the ratio of the model parameter estimate and its associated standard error. The null hypothesis being tested by this statistic is that there is not a relationship between the covariate and the item worth, with values greater than 2 leading to rejection of the null. Based on the results, the relationship between degree (grad) and contract length (Beta1item0) was positive and statistically significant (0.89715384/0.4476206 = 2.004273). Therefore, we conclude that participants with more advanced degrees tended to give contract length higher ranks. None of the other coefficients were statistically significant."
+
+## Plackett-Luce tree (PLT)
+
+"An alternative approach for investigating relationships between rater covariates and the PLM worth parameters is with a Plackett-Luce tree (PLT). Like the PLMC, the PLT is designed to assess whether specific rater traits are associated with rater characteristics."
+
+```{r}
+faculty.n <- nrow(d)
+faculty.g <- PlackettLuce::group(d.rankings, 
+                                 index = rep(seq_len(faculty.n), 1))
+faculty.tree <- pltree(faculty.g ~ grad + experience, 
+                       data = d, 
+                       minsize = 2, maxdepth = 3)
+faculty.tree
+plot(faculty.tree)
+```
+
+"PLT is particularly effective for exploring interactions of the covariates with regard to the item worth parameters. For this example, the PLT model did not find any statistically significant splits with regard to either of the covariates. Therefore, the resulting tree was simply a single node including all of the participants. The worth estimates yielded by the tree were very close to those provided by the PLM." Compare to `summary(faculty.mod_mle)` above.
+
+
+## References
+
+- Finch, Holmes (2022) "An introduction to the analysis of ranked response data," Practical Assessment, Research, and Evaluation: Vol. 27, Article 7.
+DOI: https://doi.org/10.7275/tgkh-qk47
+Available at: https://scholarworks.umass.edu/pare/vol27/iss1/7
+
+- Lee, P.H., Yu, P.L. An R package for analyzing and modeling ranking data. BMC Med Res Methodol 13, 65 (2013). https://doi.org/10.1186/1471-2288-13-65
