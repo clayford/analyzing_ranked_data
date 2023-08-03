@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Clay Ford">
-<meta name="dcterms.date" content="2023-07-01">
+<meta name="dcterms.date" content="2023-08-23">
 
 <title>Analysis of Ranked Response Data</title>
 <style>
@@ -3152,7 +3152,7 @@ return!"\t\n\x0B\f\r                　\u2028\u2029
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 1, 2023</p>
+      <p class="date">August 23, 2023</p>
     </div>
   </div>
   
@@ -3272,7 +3272,8 @@ return!"\t\n\x0B\f\r                　\u2028\u2029
 </div>
 <p>Next use <code>destat</code> on the <code>d.agg</code> object to get descriptive statistics.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>d.stat <span class="ot">&lt;-</span> pmr<span class="sc">::</span><span class="fu">destat</span>(d.agg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 5 content</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>d.stat <span class="ot">&lt;-</span> pmr<span class="sc">::</span><span class="fu">destat</span>(d.agg)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Descriptive statistics of ranking data: </code></pre>
 </div>
@@ -3319,7 +3320,7 @@ travel_budget        8      3           6       13             7             0</
 </div>
 </div>
 <p>For example, row 1 (contract) says contract was ranked higher than salary 11 times, ranked higher than health care 13 times, and so on.</p>
-<p><code>mar</code> component shows number of times where item i (row) is ranked j (column). We can add row names to make thsi easier to read.</p>
+<p><code>mar</code> component shows number of times where item i (row) is ranked j (column). We can add row names to make this easier to read.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(d.stat<span class="sc">$</span>mar) <span class="ot">&lt;-</span> <span class="fu">names</span>(d[,<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>])</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>d.stat<span class="sc">$</span>mar</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3353,13 +3354,14 @@ travel_budget    0    2    3    5   10   21</code></pre>
 <p>Test statistic has Chi-square distribution with degrees of freedom of <span class="math inline">\(t - 1\)</span></p>
 <p>Function to calculate test statistic. Not from paper, I wrote this.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(n, t, mean.rank){</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  null_mean <span class="ot">&lt;-</span> <span class="fu">rep</span>((t<span class="sc">+</span><span class="dv">1</span>)<span class="sc">/</span><span class="dv">2</span>, t)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> ((<span class="dv">12</span> <span class="sc">*</span> n)<span class="sc">/</span>(t <span class="sc">*</span> (t<span class="sc">+</span><span class="dv">1</span>)))</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  Q <span class="ot">&lt;-</span> A <span class="sc">*</span> <span class="fu">sum</span>((mean.rank <span class="sc">-</span> null_mean)<span class="sc">^</span><span class="dv">2</span>)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">pchisq</span>(Q, <span class="at">df =</span> t <span class="sc">-</span> <span class="dv">1</span>, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">statistic =</span> Q, <span class="at">df =</span> t <span class="sc">-</span> <span class="dv">1</span>, <span class="at">p.value =</span> p)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># formula 2, page 3</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(n, t, mean.rank){</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  null_mean <span class="ot">&lt;-</span> <span class="fu">rep</span>((t<span class="sc">+</span><span class="dv">1</span>)<span class="sc">/</span><span class="dv">2</span>, t)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  A <span class="ot">&lt;-</span> ((<span class="dv">12</span> <span class="sc">*</span> n)<span class="sc">/</span>(t <span class="sc">*</span> (t<span class="sc">+</span><span class="dv">1</span>)))</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  Q <span class="ot">&lt;-</span> A <span class="sc">*</span> <span class="fu">sum</span>((mean.rank <span class="sc">-</span> null_mean)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  p <span class="ot">&lt;-</span> <span class="fu">pchisq</span>(Q, <span class="at">df =</span> t <span class="sc">-</span> <span class="dv">1</span>, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">statistic =</span> Q, <span class="at">df =</span> t <span class="sc">-</span> <span class="dv">1</span>, <span class="at">p.value =</span> p)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Test null that all items have same mean rank</p>
 <div class="cell">
@@ -3395,7 +3397,8 @@ $p.value
 <p>From paper: “The plot displays the locations of the 6 items and 41 respondents on dimensions 1 and 2. Salary is most central, which reflects that it was the highest ranked of the items by many individuals. In contrast, travel budget and workload lay furthest from the cloud of participant points, which is expected given that they were the lowest ranked items for most raters. The locations of health care, contract and chair support relative to the participants indicates their midlevel rankings.”</p>
 <p>“dimension 1 appears to reflect the contrast between workload and contract, such that those who ranked workload relatively more highly were also more likely to rank contract terms relatively lower. In addition, dimension 1 also reveals that ranks for salary and health care were closely related to one another; i.e., those who ranked salary highly also tended to rank health care highly.”</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>d.smacof<span class="sc">$</span>conf.col</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 4, bottom 6 rows</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>d.smacof<span class="sc">$</span>conf.col</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                      D1         D2
 contract      -0.8553560  0.1534994
@@ -3407,16 +3410,18 @@ travel_budget -0.3792021 -1.1732859</code></pre>
 </div>
 </div>
 <p>“The MDS coefficients for the items also show that Salary and Health care were most closely associated with one another, as were Chair support and Travel budget. Contract and Workload had coefficients that differed from the other items and from one another.”</p>
-<p>Look at MDS coefficients for raters 2 - 4 and their rankings.</p>
+<p>Look at MDS coefficients for raters 2 - 4 and their rankings. (Paper incorrectly indentifies these as raters 1 - 3.)</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>d.smacof<span class="sc">$</span>conf.row[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 4, first 3 rows</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>d.smacof<span class="sc">$</span>conf.row[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>          D1          D2
 2 -0.5305531  0.05295034
 3  0.1465837  0.04082689
 4  0.5408771 -0.12371757</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>d[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># compare to original rankings made by raters 2 - 4</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>d[<span class="dv">2</span><span class="sc">:</span><span class="dv">4</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  contract salary health_care workload chair_support travel_budget
 2        1      2           5        6             3             4
@@ -3432,12 +3437,14 @@ travel_budget -0.3792021 -1.1732859</code></pre>
 <p>“The key parameter in the PLM is item worth, which reflects the importance of the item and corresponds to the ranks provided by the subjects. Higher values of the worth reflects greater importance of the item as reflected in the rankings. In other words, items that are given a higher rank will also have a higher worth value.”</p>
 <p>PLM can be extended to investigate relationships between the rankings and other variables associated either with the item or the rater.</p>
 <p>Use the <code>PlackettLuce()</code> function in the {PlackettLuce} package. It requires a rankings object which can be created with the <code>as.rankings()</code> function.</p>
+<p>This chunk of code produces Table 6</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PlackettLuce)</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>d.rankings <span class="ot">&lt;-</span> PlackettLuce<span class="sc">::</span><span class="fu">as.rankings</span>(d[,<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>])</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># With npseudo = 0 the MLE is the posterior mode.</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>faculty.mod_mle <span class="ot">&lt;-</span> <span class="fu">PlackettLuce</span>(d.rankings, <span class="at">npseudo=</span><span class="dv">0</span>)</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(faculty.mod_mle) <span class="co"># contract is reference level</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 6</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PlackettLuce)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>d.rankings <span class="ot">&lt;-</span> PlackettLuce<span class="sc">::</span><span class="fu">as.rankings</span>(d[,<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>])</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="co"># With npseudo = 0 the MLE is the posterior mode.</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>faculty.mod_mle <span class="ot">&lt;-</span> <span class="fu">PlackettLuce</span>(d.rankings, <span class="at">npseudo=</span><span class="dv">0</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(faculty.mod_mle) <span class="co"># contract is reference level</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Call: PlackettLuce(rankings = d.rankings, npseudo = 0)
 
@@ -3458,8 +3465,10 @@ Number of iterations: 7</code></pre>
 </div>
 </div>
 <p>“From these results, we see that salary and health care both had statistically significant positive worth values, meaning that they were higher ranked (more valued) than contract terms by the participants. Conversely, travel budget had a statistically significant negative coefficient, indicating that it was rated as less valuable than contract terms. The worth estimates for workload and chair support were not significantly different than that of contract.”</p>
+<p>This produces Table 7.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(faculty.mod_mle, <span class="at">ref=</span><span class="cn">NULL</span>) <span class="co"># mean worth is reference level</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 7</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(faculty.mod_mle, <span class="at">ref=</span><span class="cn">NULL</span>) <span class="co"># mean worth is reference level</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Call: PlackettLuce(rankings = d.rankings, npseudo = 0)
 
@@ -3480,10 +3489,11 @@ Number of iterations: 7</code></pre>
 </div>
 </div>
 <p>“the worth estimates reflect the importance of an item <em>relative to the mean ranking across the items</em>. Thus, salary and health care were both ranked significantly higher than average, whereas workload and travel budget were ranked significantly lower than average by the participants. Contract and chair support had ranks that were statistically equivalent to the overall average.”</p>
-<p>Can use <code>psychotools::itempar()</code> to estimate probabilities that each item received the highest rank.</p>
+<p>Can use <code>psychotools::itempar()</code> to estimate probabilities that each item received the highest rank. This produces Table 8.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>faculty.mod_mle.itempars <span class="ot">&lt;-</span> psychotools<span class="sc">::</span><span class="fu">itempar</span>(faculty.mod_mle, <span class="at">vcov=</span><span class="cn">TRUE</span>)</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>faculty.mod_mle.itempars</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 8</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>faculty.mod_mle.itempars <span class="ot">&lt;-</span> psychotools<span class="sc">::</span><span class="fu">itempar</span>(faculty.mod_mle, <span class="at">vcov=</span><span class="cn">TRUE</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>faculty.mod_mle.itempars</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Item response item parameters (PlackettLuce):
      contract        salary   health_care      workload chair_support 
@@ -3514,7 +3524,8 @@ travel_budget
 <div class="cell-output cell-output-stderr">
 <pre><code>Maximum Likelihood Estimation of the Rank-ordered Logit Model</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(plmc1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 9, columns 1 and 2</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(plmc1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Maximum likelihood estimation
 
@@ -3536,7 +3547,8 @@ Beta1item5 -0.12164574  0.3137075
 
 -2 log L: 441.4313 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(plmc2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Table 9 columns 3 and 4</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(plmc2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Maximum likelihood estimation
 

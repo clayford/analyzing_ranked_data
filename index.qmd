@@ -1,7 +1,7 @@
 ---
 title: "Analysis of Ranked Response Data"
 author: "Clay Ford"
-date: "July 2023"
+date: 2023-08-23
 format:
   html:
     embed-resources: true
@@ -68,6 +68,7 @@ names(d[,1:6])
 Next use `destat` on the `d.agg` object to get descriptive statistics.
 
 ```{r}
+# Table 5 content
 d.stat <- pmr::destat(d.agg)
 d.stat
 ```
@@ -83,7 +84,7 @@ d.stat$pair
 
 For example, row 1 (contract) says contract was ranked higher than salary 11 times, ranked higher than health care 13 times, and so on.
 
-`mar` component shows number of times where item i (row) is ranked j (column). We can add row names to make thsi easier to read.
+`mar` component shows number of times where item i (row) is ranked j (column). We can add row names to make this easier to read.
 
 ```{r}
 rownames(d.stat$mar) <- names(d[,1:6])
@@ -114,6 +115,7 @@ Test statistic has Chi-square distribution with degrees of freedom of $t - 1$
 Function to calculate test statistic. Not from paper, I wrote this.
 
 ```{r}
+# formula 2, page 3
 f <- function(n, t, mean.rank){
   null_mean <- rep((t+1)/2, t)
   A <- ((12 * n)/(t * (t+1)))
@@ -153,15 +155,18 @@ From paper: "The plot displays the locations of the 6 items and 41 respondents o
 "dimension 1 appears to reflect the contrast between workload and contract, such that those who ranked workload relatively more highly were also more likely to rank contract terms relatively lower. In addition, dimension 1 also reveals that ranks for salary and health care were closely related to one another; i.e., those who ranked salary highly also tended to rank health care highly."
 
 ```{r}
+# Table 4, bottom 6 rows
 d.smacof$conf.col
 ```
 
 "The MDS coefficients for the items also show that Salary and Health care were most closely associated with one another, as were Chair support and Travel budget. Contract and Workload had coefficients that differed from the other items and from one another."
 
-Look at MDS coefficients for raters 2 - 4 and their rankings.
+Look at MDS coefficients for raters 2 - 4 and their rankings. (Paper incorrectly indentifies these as raters 1 - 3.)
 
 ```{r}
+# Table 4, first 3 rows
 d.smacof$conf.row[2:4,]
+# compare to original rankings made by raters 2 - 4
 d[2:4,1:6]
 ```
 
@@ -177,7 +182,10 @@ PLM can be extended to investigate relationships between the rankings and other 
 
 Use the `PlackettLuce()` function in the {PlackettLuce} package. It requires a rankings object which can be created with the `as.rankings()` function.
 
+This chunk of code produces Table 6
+
 ```{r message=FALSE}
+# Table 6
 library(PlackettLuce)
 d.rankings <- PlackettLuce::as.rankings(d[,1:6])
 # With npseudo = 0 the MLE is the posterior mode.
@@ -187,15 +195,19 @@ summary(faculty.mod_mle) # contract is reference level
 
 "From these results, we see that salary and health care both had statistically significant positive worth values, meaning that they were higher ranked (more valued) than contract terms by the participants. Conversely, travel budget had a statistically significant negative coefficient, indicating that it was rated as less valuable than contract terms. The worth estimates for workload and chair support were not significantly different than that of contract."
 
+This produces Table 7.
+
 ```{r}
+# Table 7
 summary(faculty.mod_mle, ref=NULL) # mean worth is reference level
 ```
 
 "the worth estimates reflect the importance of an item _relative to the mean ranking across the items_. Thus, salary and health care were both ranked significantly higher than average, whereas workload and travel budget were ranked significantly lower than average by the participants. Contract and chair support had ranks that were statistically equivalent to the overall average."
 
-Can use `psychotools::itempar()` to estimate probabilities that each item received the highest rank.
+Can use `psychotools::itempar()` to estimate probabilities that each item received the highest rank. This produces Table 8.
 
 ```{r}
+# Table 8
 faculty.mod_mle.itempars <- psychotools::itempar(faculty.mod_mle, vcov=TRUE)
 faculty.mod_mle.itempars
 ```
@@ -217,7 +229,9 @@ Paper uses `pmr::rol()` function to fit these models. It requires a ranking data
 ```{r warning=FALSE}
 plmc1 <- pmr::rol(dset = d.rankings, covariate = d$experience)
 plmc2 <- pmr::rol(dset = d.rankings, covariate = d$grad)
+# Table 9, columns 1 and 2
 summary(plmc1)
+# Table 9 columns 3 and 4
 summary(plmc2)
 ```
 
